@@ -43,7 +43,7 @@
     - name: find all the sh files
       find:
         path: "{{ tomcat_home }}/latest/bin"
-        patterns: '*.sh'
+        pattern: '*.sh'
       register: shfiles
     - name: print values
       debug:
