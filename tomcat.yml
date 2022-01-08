@@ -33,24 +33,24 @@
         src: "{{ tomcat_home }}"
         dest: "{{ tomcat_home }}/latest"
         state: link
-    - name: change file permission
+    - name: give permission to tomcat user
       ansible.builtin.file:
         path: "{{ tomcat_home }}"
         state: directory
         recurse: yes
         owner: "{{ tomcat_username }}"  
         group: "{{ tomcat_username }}"  
-    - name: find the sh files
+    - name: find all the sh files
       find:
-        path: "{{tomcat_home}}/latest/bin"
+        path: "{{ tomcat_home }}/latest/bin"
         patterns: '*.sh'
       register: shfiles
     - name: print values
       debug:
         var: shfiles
     - name: set the fact variables
-     set_fact:
-        tomcat_executables: "{{shfiles.files | map(attribute='path') | list }}" 
+      set_fact:
+        tomcat_executables: "{{ shfiles.files | map(attribute='path') | list }}" 
     - name: print variables
       debug:
         var: tomcat_executables
