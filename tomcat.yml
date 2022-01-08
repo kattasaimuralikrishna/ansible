@@ -7,6 +7,7 @@
     tomcat_username: tomact
     tomcat_shell: /bin/false
     tomcat_version: '9.0.54'
+    tomcat_service_dest: /etc/systemd/system/tomcat.service
   tasks:
     - name: install java
       apt:
@@ -31,42 +32,50 @@
       ansible.builtin.file:
         src: "{{ tomcat_home }}"
         dest: "{{ tomcat_home }}/latest"
-        owner: tomcat
-        group: tomcat
         state: link
+    - name: change file permission
+      ansible.builtin.file:
+        path: "{{ tomcat_home }}"
+        state: directory
+        recurse: yes
+        owner: "{{ tomcat_username }}"  
+        group: "{{ tomcat_username }}"  
+    - name: find the sh files
+      find:
+        path: "{{tomcat_home}}/latest/bin"
+        patterns: '*.sh'
+      register: shfiles
+    - name: print values
+      debug:
+        var: shfiles
+    - name: set the fact variables
+     set_fact:
+        tomcat_executables: "{{shfiles.files | map(attribute='path') | list }}" 
+    - name: print variables
+      debug:
+        var: tomcat_executables
+    - name: change permission of the sh files
+      ansible.builtin.file:
+        path: "{{ item }}"  
+        mode: '0751'
+      with_items: "{{ tomcat_executables }}"        
     - name: copy the content         
       ansible.builtin.copy:
-        content: '[Unit]
-        Description=Tomcat 9 servlet container
-        After=network.target
+        src: tomcat.service
+        dest: "{{ tomcat_service_dest }}"
+      notify:
+      - reload and enable tomcat
+    - name: ensure tomacat is running 
+      ansible.builtin.systemd:
+        name: tomcat.service
+        state: started
+  handlers:
+    - name: reload and enable tomcat
+      ansible.builtin.systemd:
+        name: tomcat.service
+        deamon_reload: yes
+        state: reloded
+        enabled: yes
 
-        [Service]
-        Type=forking
-
-        User=tomcat
-        Group=tomcat
-
-        Environment="JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"
-        Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true"
-
-        Environment="CATALINA_BASE=/opt/tomcat/latest"
-        Environment="CATALINA_HOME=/opt/tomcat/latest"
-        Environment="CATALINA_PID=/opt/tomcat/latest/temp/tomcat.pid"
-        Environment="CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
-
-        ExecStart=/opt/tomcat/latest/bin/startup.sh
-        ExecStop=/opt/tomcat/latest/bin/shutdown.sh
-
-        [Install]
-        WantedBy=multi-user.target'
-        dest: /etc/systemd/system/tomcat.service  
-    - name: restart tomcat service
-      ansible.builtin.service:
-        name: tomcat
-        state:
-          - restarted
-          - reloaded
-          - started
-          - enabled
 
    
