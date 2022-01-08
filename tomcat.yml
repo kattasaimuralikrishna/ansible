@@ -23,11 +23,11 @@
     - name: copy the tomcat file
       get_url:
         url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.56/bin/apache-tomcat-9.0.56.tar.gz
-        dest: /tmp    
+        dest: /tmp/apache-tomcat-9.0.56.tar.gz 
     - name: untar the tomcat file and save it to /opt/tomcat file
       ansible.builtin.unarchive:
-        src: /tmp/
-        dest: /opt/tomcat/
+        src: /tmp/apache-tomcat-9.0.56.tar.gz
+        dest: /opt/tomcat
     - name: create symlink
       ansible.builtin.file:
         src: /opt/tomcat/
