@@ -6,7 +6,7 @@
     tomcat_home: /opt/tomcat
     tomcat_username: tomact
     tomcat_shell: /bin/false
-    tomcat_version: "9.0.56"
+    tomcat_version: '9.0.54'
   tasks:
     - name: install java
       apt:
@@ -22,7 +22,7 @@
     - name: copy the tomcat file
       get_url:
         url: "https://archive.apache.org/dist/tomcat/tomcat-9/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz"
-        dest: "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"
+        dest: "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"    
     - name: untar the tomcat file and save it to /opt/tomcat file
       ansible.builtin.unarchive:  
         src: "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"
@@ -30,7 +30,7 @@
     - name: create symlink
       ansible.builtin.file:
         src: "{{ tomcat_home }}"
-        dest: "{{ tomcat_home }}"/latest
+        dest: "{{ tomcat_home }}/latest"
         owner: tomcat
         group: tomcat
         state: link
