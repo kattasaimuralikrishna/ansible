@@ -1,0 +1,66 @@
+---
+- name: install tomcat on ubuntu
+  host: all
+  become: yes
+  tasks:
+    - name: install java
+      apt:
+        name: openjdk-11-jdk
+        update_cache: yes
+        state: present
+    - name: create user with new directory and new shell
+      ansible.builtin.user:
+        name: tomcat
+        home: /opt/tomcat
+        group: tomcat
+        shell: /bin/false
+        state: present
+    - name: untar the tomcat file and save it to /opt/tomcat file
+      ansible.builtin.unarchive:
+        src: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.56/bin/apache-tomcat-9.0.56.tar.gz
+        dest: /opt/tomcat
+        remote_src: yes
+    - name: create symlink
+      ansible.builtin.file:
+        src: /opt/tomcat/
+        dest: /opt/tomcat/latest
+        owner: tomcat
+        group: tomcat
+        state: link
+    - name: copy the content on /etc/systemd/system/tomcat.service        
+      ansible.builtin.copy:
+        content: |
+         [Unit]
+        Description=Tomcat 9 servlet container
+        After=network.target
+
+        [Service]
+        Type=forking
+
+        User=tomcat
+        Group=tomcat
+
+        Environment="JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"
+        Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true"
+
+        Environment="CATALINA_BASE=/opt/tomcat/latest"
+        Environment="CATALINA_HOME=/opt/tomcat/latest"
+        Environment="CATALINA_PID=/opt/tomcat/latest/temp/tomcat.pid"
+        Environment="CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
+
+        ExecStart=/opt/tomcat/latest/bin/startup.sh
+        ExecStop=/opt/tomcat/latest/bin/shutdown.sh
+
+        [Install]
+        WantedBy=multi-user.target
+      dest: /etc/systemd/system/tomcat.service  
+    - name: restart tomcat service
+      ansible.builtin.service:
+        name: tomcat
+        state:
+          - restarted
+          - reloaded
+          - started
+          - enabled
+          
+   
